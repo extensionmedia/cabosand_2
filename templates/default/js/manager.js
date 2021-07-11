@@ -941,7 +941,6 @@ $(document).ready(function(){
 	});
 	
 	$(document).on('click', '.show_propriete_proprietaire', function(){
-		
 		var data = {
 			'controler'		:	'Propriete_Proprietaire_Location',
 			'function'		:	'Table',
@@ -971,6 +970,37 @@ $(document).ready(function(){
 		
 	});
 	
+	$(document).on('click', '.show_propriete_proprietaire_locations', function(){
+		
+		var data = {
+			'controler'		:	'Propriete',
+			'function'		:	'contrat_client_locations',
+			'params'		:	{
+				'id_propriete'		:	$(this).data("id")
+			}
+		};
+		$('body').preloader();
+		$.ajax({
+			type		: 	"POST",
+			url			: 	"pages/default/ajax/ajax.php",
+			data		:	data,
+			dataType	: 	"json",
+		}).done(function(response){
+			
+			$("#preloader").remove();
+			$('body').popup({
+				'content' : response.msg, 
+				'popup_title': 'Liste des Contrats'
+			});
+			
+		}).fail(function(xhr) {
+			alert("Error");
+			console.log(xhr.responseText);
+		});
+		
+		
+	});
+
 	$(document).on('click', '.ppl .add', function(){
 		
 		var data = {

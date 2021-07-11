@@ -31,13 +31,24 @@ class View{
      * @return string The rendered template.
      */
     public function render(Array $data) {
-		
+	/*	
 		$ROOT = $_SESSION["ROOT"];
 		
         extract($data);
         $sep = DIRECTORY_SEPARATOR;
         ob_start();
         include( $ROOT .  "pages"  . $sep . "default"  . $sep . "includes" . $sep . $this->template . ".php");
+        $content = ob_get_contents();
+        ob_end_clean();
+        return $content;
+    */
+        $sep = DIRECTORY_SEPARATOR;
+        $views_path = dirname(__FILE__)  . $sep . '..'  . $sep . 'Views'  . $sep;
+        
+        extract($data);
+        
+        ob_start();
+        include( $views_path . $this->template . ".php");
         $content = ob_get_contents();
         ob_end_clean();
         return $content;

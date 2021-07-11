@@ -13,7 +13,6 @@ class Propriete extends Modal{
 		try{
 			parent::__construct();
 			$this->setTableName(strtolower($this->tableName));
-
 /*
 			$data = $this->find('', ['conditions'=>['YEAR(created)='=>2021]], 'propriete_location');
 
@@ -27,7 +26,6 @@ class Propriete extends Modal{
 				}
 			}
 */
-
 		}catch(Exception $e){
 			die($e->getMessage());
 		}
@@ -282,7 +280,10 @@ class Propriete extends Modal{
 						if($columns[$key]["format"] === "money"){
 							$trs .= "<td class='".$is_display."' style='".$style."'>" . $this->format($v[ $columns[$key]["column"] ]) . "</td>";
 						}elseif($columns[$key]["column"] == "nbr_nuite"){
-							$trs .= "<td style='".$style."'><button class='show_propriete_proprietaire' data-id='".$v['id']."'>" . $nbr_nuite . "</button></td>";
+							$trs .= "<td style='".$style."'>
+										<button class='show_propriete_proprietaire' data-id='".$v['id']."'>" . $nbr_nuite . "</button>
+										<button class='show_propriete_proprietaire_locations' data-id='".$v['id']."'>Nuites</button>
+									</td>";
 						}else if($columns[$key]["format"] === "on_off"){
 							$trs .= "<td class='".$is_display."' style='".$style."'><div class='label label-red'>Désactive</div></td>";
 						}else if($columns[$key]["format"] === "color"){
@@ -946,5 +947,131 @@ class Propriete extends Modal{
 		}
 	}
 	
+	
+	/*
+		Liste Propriete Location envers Proprietaire / Client
+	*/
+
+	public function contrat_client_locations($params){
+
+		$request = "
+		SELECT 
+			p_l.id,
+			p_l.date_debut as date_debut,
+			p_l.date_fin as date_fin,
+			p_l.status as status,
+			to_days(p_l.date_fin) - to_days(p_l.date_debut) AS nbr_nuite,
+			client.first_name as first_name,
+			client.last_name as last_name,
+			colors.hex_string as hex
+		FROM propriete_location as p_l
+		LEFT JOIN contrat_periode ON contrat_periode.id = p_l.id_periode
+		LEFT JOIN contrat ON contrat.UID = contrat_periode.UID
+		LEFT JOIN client ON client.id = contrat.id_client
+		LEFT JOIN colors on colors.color_id = client.id_color
+		WHERE p_l.id_propriete = ".$params['id_propriete']."
+		ORDER BY p_l.date_debut DESC
+		";
+
+		$ppl = $this->find('', ['conditions'=>['id_propriete=' => $params['id_propriete'] ], 'order'=>'de DESC'], 'v_propriete_proprietaire_location');
+		$pl = $this->execute($request);
+		$view = new View("propriete.location");
+		return $view->render([
+			'ppl'			=>		$ppl,
+			'pl'			=>		$pl,
+			'Obj'			=>		$this,
+			'id_propriete'	=>		$params['id_propriete']
+		]);
+	}
+
+	/*
+		Search Propriete Location envers Proprietaire
+	*/
+	public function get_proprietaire_locations_by_propriete($params){
+		$ppl = $this->find('', ['conditions'=>['id_propriete=' => $params['id_propriete'] ], 'order'=>'created DESC'], 'v_propriete_proprietaire_location');
+		$trs = "";
+		foreach($ppl as $p){
+			$view = new View("propriete.proprietaire_location.tr");
+			$trs .= $view->render([
+				'p'		=>		$p,
+				'Obj'		=>		$this
+			]);
+		}
+		return $trs;
+	}
+	
+	/*
+	Create Propriete Location envers Proprietaire
+	*/
+	public function create_proprietaire_locations($params){
+		$view = new View("propriete.proprietaire_location.create");
+		return $view->render([
+			'Obj'			=>		$this,
+			'id_propriete'	=>		$params['id_propriete']
+		]);
+	}
+	/*
+	Update Propriete Location envers Proprietaire
+	*/
+	public function update_proprietaire_locations($params){
+		$view = new View("propriete.proprietaire_location.update");
+		$ppl = $this->find('', [ 'conditions'=>[ 'id='=>$params['id'] ] ], 'v_propriete_proprietaire_location');	
+
+		return $view->render([
+			'Obj'			=>		$this,
+			'ppl'	=>		$ppl[0]
+		]);
+	}
+
+	/*
+	Create Propriete Location envers Client
+	*/
+	public function create_client_locations($params){
+		$request = "
+						SELECT 
+							client.first_name,
+							client.last_name,
+							client.societe_name,
+							client.id as id_client,
+							contrat.UID as contrat_UID,
+							YEAR(contrat.created) as annee
+						FROM contrat
+						LEFT JOIN client ON client.id = contrat.id_client
+						WHERE contrat.status=1
+						ORDER BY annee DESC,societe_name ASC
+						";
+		$clients = $this->execute($request);
+		$view = new View("propriete.client_location.create");
+		return $view->render([
+			'Obj'			=>		$this,
+			'id_propriete'	=>		$params['id_propriete'],
+			'clients'		=>		$clients	
+		]);
+	}
+
+	public function get_periodes_by_client($params){
+		$periodes_ = $this->find('', ['conditions AND'=>[ 'UID='=>$params['UID'], 'status='=>1 ] ], 'contrat_periode');
+		$periodes = [];
+
+		foreach($periodes_ as $p){
+			$isDisponible = $this->IsHasProprietaireContrat(['id_propriete'=>$params['id_propriete'], 'date_debut'=>$p["date_debut"], 'date_fin'=>$p["date_fin"]]);
+			$periodes[] = [
+				'date_debut'	=>	$p["date_debut"],
+				'date_fin'		=>	$p["date_fin"],
+				'id_periode'	=>	$p["id"],
+				'status'		=>	$isDisponible? "dispo": "non dispo"
+			];
+		}
+
+		$view = new View("propriete.client_location.periodes");
+		return $view->render([
+			'Obj'			=>		$this,
+			'id_propriete'	=>		$params['id_propriete'],
+			'id_client'		=>		$params['id_client'],
+			'UID'			=>		$params['UID'],
+			'periodes'		=>		$periodes	
+		]);
+	}
+
 }
 $propriete = new Propriete;
