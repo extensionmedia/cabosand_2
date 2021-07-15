@@ -1027,6 +1027,7 @@ class Propriete extends Modal{
 	Create Propriete Location envers Client
 	*/
 	public function create_client_locations($params){
+		$clients = [];
 		$request = "
 						SELECT 
 							client.first_name,
@@ -1034,13 +1035,41 @@ class Propriete extends Modal{
 							client.societe_name,
 							client.id as id_client,
 							contrat.UID as contrat_UID,
-							YEAR(contrat.created) as annee
+							YEAR(contrat.created) as annee,
+							c_p.date_debut as date_debut,
+							c_p.date_fin as date_fin,
+							c_p.nbr_nuite as nbr_nuite,
+							c_p.status as status
 						FROM contrat
 						LEFT JOIN client ON client.id = contrat.id_client
+						LEFT JOIN contrat_periode c_p on c_p.UID=contrat.UID
 						WHERE contrat.status=1
 						ORDER BY annee DESC,societe_name ASC
 						";
-		$clients = $this->execute($request);
+		$periodes = $this->execute($request);
+
+		foreach($periodes as $c_p){
+			$isDisponible = $this->IsHasProprietaireContrat(
+				[
+					'id_propriete'	=>	$params['id_propriete'], 
+					'date_debut'	=>	$c_p["date_debut"], 
+					'date_fin'		=>	$c_p["date_fin"]
+				]);
+			if($isDisponible){
+				$isDisponibleOnThisPeriode = $this->IsDisponibleOnThisPeriode(
+					[
+						'id_propriete'	=>	$params['id_propriete'], 
+						'date_debut'	=>	$c_p["date_debut"], 
+						'date_fin'		=>	$c_p["date_fin"]
+					]);
+
+				if ( $isDisponibleOnThisPeriode ){
+					$c_p["msg"] = "disponible";
+					$clients[] = $c_p;
+				}
+			}
+		}
+
 		$view = new View("propriete.client_location.create");
 		return $view->render([
 			'Obj'			=>		$this,
