@@ -1,5 +1,5 @@
-var HOST = 'http://extensionmedia/CLIENTS/cabosand.ma/manager/';
-//var HOST = 'http://www.manager.kabilamarina.com/';
+//var HOST = 'http://extensionmedia/CLIENTS/cabosand.ma/manager/';
+var HOST = 'https://manager.cabosand.ma/';
 var animationend = "webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend";
 
 $(document).ready(function(){
