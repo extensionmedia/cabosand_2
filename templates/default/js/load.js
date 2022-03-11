@@ -34,7 +34,7 @@ $(document).ready(function(){
 		
 		if($(this).attr("data-action") === "edit"){ data.id = $(this).val(); }
 		
-		console.log(data);
+		//console.log(data);
 		
 		$("body").css("overflow", "hidden");
 
@@ -95,7 +95,7 @@ $(document).ready(function(){
 	$(document).on('click', '.save_form', function(){
 
 		var selector = $(this).attr("data-table");
-		console.log(selector + " table");
+		//console.log(selector + " table");
 		var columns = {};
 		var success = true;
 		
@@ -823,7 +823,7 @@ $(window).on('load', function() {
 		data		:	data,
 		dataType	: 	"json",
 	}).done(function(response){
-		console.log(response);
+		//console.log(response);
 		if(response.msg === 1){
 			
 			var data = {};
