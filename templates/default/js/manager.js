@@ -308,7 +308,7 @@ $(document).ready(function(){
 			data		:	data,
 			dataType	: 	"json",
 		}).done(function(response){
-			
+			console.log(response)
 			$("#preloader").remove();
 			$('body').modal();
 			$('#modal .modal_content').html(response.msg);
