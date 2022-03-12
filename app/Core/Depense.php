@@ -669,7 +669,7 @@ class Depense extends Modal{
 	
 	public function Create($params = []){
 		$view = new View("depense.create");
-		return $view->render(['params'=>$params]);
+		return 'created'; //$view->render(['params'=>$params]);
 	}
 	
 	public function Update($params){
